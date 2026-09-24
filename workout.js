@@ -31,7 +31,7 @@ function render(){
    }
    let el=document.createElement('section');el.className='exercise';
    el.innerHTML=`<div class='exerciseTop'><div><div class='tag'>${e.target.toUpperCase()}</div><h2>${saved.performed}</h2>${saved.performed!==e.name?`<div class='smallnote'>Prescribed: ${e.name}</div>`:''}</div><button class='swap' data-swap='${ei}'>Swap</button></div>
-   <div class='prescription'><div><span>LAST</span><b>${e.last}</b></div><div><span>COACH TARGET</span><b>${e.today}</b></div></div>
+   <div class='prescription three'><div><span>LAST</span><b>${e.last}</b></div><div><span>BEST</span><b>${e.best||'—'}</b></div><div><span>TODAY</span><b>${e.today}</b></div></div><div class='autoCoach hidden' id='autoCoach-${ei}'></div>
    <p class='muted'>${e.sets} prescribed sets · ${e.reps} reps · RIR ${e.rir} · ${e.rest}s rest</p>${rows}
    <button class='addset' data-add='${ei}'>+ Add Set (override)</button>
    <div class='techniques'>Intensity technique <select data-tech='${ei}'><option ${saved.technique==='None'?'selected':''}>None</option><option ${saved.technique==='Drop set'?'selected':''}>Drop set</option><option ${saved.technique==='Rest-pause'?'selected':''}>Rest-pause</option><option ${saved.technique==='Partials'?'selected':''}>Partials</option><option ${saved.technique==='Assisted reps'?'selected':''}>Assisted reps</option></select></div>`;
@@ -41,6 +41,15 @@ function render(){
 }
 render();
 
+function cleanCoachText(v){return String(v||'').replace(/\\*\\*/g,'').replace(/^#+\\s*/gm,'').trim()}
+function esc(v){return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function fmtSet(x){if(!x)return '—';const load=x.load_value??x.load_kg,unit=x.load_unit||'kg',lt=(load===null||load===undefined||load==='')?'BW':String(Number(load));return lt+(lt==='BW'?'':' '+unit)+' × '+(x.reps??'?')+(x.rir===null||x.rir===undefined?'':' @'+x.rir+' RIR')}
+function parseRange(txt){const m=String(txt).match(/(\\d+)\\D+(\\d+)/);return m?[+m[1],+m[2]]:[8,12]}
+async function hydrateCloudTargets(){
+ for(let i=0;i<baseExercises.length;i++){const e=baseExercises[i],es=exState(i);try{const h=await BBDB.lastSets(es.performed,30);if(!h.length)continue;e.last=fmtSet(h[0]);const unit=h[0].load_unit||'kg',same=h.filter(x=>(x.load_unit||'kg')===unit&&(x.load_value??x.load_kg)!=null);if(same.length)e.best=fmtSet(same.slice().sort((a,b)=>Number(b.load_value??b.load_kg)*(1+Number(b.reps||0)/30)-Number(a.load_value??a.load_kg)*(1+Number(a.reps||0)/30))[0]);const [lo,hi]=parseRange(e.reps),t=BBDB.target(h,lo,hi);if(t){e.today=t.load+' '+t.unit+' × '+t.reps+' target @ '+t.rir+' RIR';const first=es.sets[0]||{};if((first.kg===''||first.kg==null)&&t.unit==='kg')first.kg=String(t.load);es.sets[0]=first}}catch(err){console.warn('Cloud target',e.name,err)}}DB.set('todayWorkout',state);render()
+}
+hydrateCloudTargets();
+async function autoCoach(ei,si){const e=baseExercises[ei],es=exState(ei),d=es.sets[si],box=document.getElementById('autoCoach-'+ei);if(!box||!d?.completed)return;box.classList.remove('hidden');box.innerHTML='<span>COACH</span><div>Assessing S'+(si+1)+'…</div>';const done=(es.sets||[]).filter(x=>x.completed).length,q='I just completed '+es.performed+' S'+(si+1)+': '+(d.kg||'?')+' kg × '+(d.reps||'?')+' reps @ '+((d.rir===''||d.rir==null)?'unrecorded':d.rir)+' RIR. '+done+' of '+e.sets+' prescribed sets are complete. Give me the next-set action: load, reps, target RIR and rest. If this exercise should be finished, say so. Plain text only, no markdown.';try{const reply=cleanCoachText(await BBDB.coach(q,state));box.innerHTML='<span>COACH</span><div>'+esc(reply).replace(/\\n/g,'<br>')+'</div>'}catch(err){box.innerHTML='<span>COACH</span><div>Coach unavailable: '+esc(err.message||err)+'</div>'}}
 document.addEventListener('change',ev=>{
  let t=ev.target;
  if(t.dataset.k!==undefined){let e=+t.dataset.e,s=+t.dataset.s,es=exState(e);es.sets[s]=es.sets[s]||{};es.sets[s][t.dataset.k]=t.value;DB.set('todayWorkout',state)}
@@ -56,7 +65,7 @@ document.addEventListener('click',ev=>{
    if(es.sets[s].completed){es.sets[s].completedAt=new Date().toISOString();startRest(baseExercises[e].rest)}
    else{delete es.sets[s].completedAt}
    DB.set('todayWorkout',state);render();
-   BBDB.syncSet(state,e,s,baseExercises[e],es,es.sets[s]).catch(err=>console.error('Cloud set sync:',err));
+   if(es.sets[s].completed){BBDB.syncSet(state,e,s,baseExercises[e],es,es.sets[s]).then(()=>autoCoach(e,s)).catch(err=>console.error('Cloud set sync:',err));}else{BBDB.syncSet(state,e,s,baseExercises[e],es,es.sets[s]).catch(err=>console.error('Cloud set sync:',err));}
    return
  }
  let sw=ev.target.dataset.swap;
