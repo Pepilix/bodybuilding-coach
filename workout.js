@@ -55,7 +55,9 @@ document.addEventListener('click',ev=>{
    es.sets[s].completed=!es.sets[s].completed;
    if(es.sets[s].completed){es.sets[s].completedAt=new Date().toISOString();startRest(baseExercises[e].rest)}
    else{delete es.sets[s].completedAt}
-   DB.set('todayWorkout',state);render();return
+   DB.set('todayWorkout',state);render();
+   BBDB.syncSet(state,e,s,baseExercises[e],es,es.sets[s]).catch(err=>console.error('Cloud set sync:',err));
+   return
  }
  let sw=ev.target.dataset.swap;
  if(sw!==undefined){showSwap(+sw);return}
@@ -78,7 +80,14 @@ function startRest(sec){clearInterval(timer);remaining=sec;document.getElementBy
 function tick(){let m=Math.floor(Math.max(0,remaining)/60),s=Math.max(0,remaining)%60;document.getElementById('restTime').textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')}
 document.getElementById('skipRest').onclick=()=>{clearInterval(timer);document.getElementById('restBar').classList.add('hidden')};
 document.getElementById('addRest').onclick=()=>{remaining+=30;tick()};
-document.getElementById('askBtn').onclick=()=>{let q=document.getElementById('coachQuestion').value.trim(),ans=document.getElementById('coachAnswer');if(!q)return;ans.innerHTML=`<div class='coachreply'><b>AI backend not connected yet.</b><br>Your question and today's structured workout state are ready for the next backend stage. No fake coaching response is generated.</div>`};
+document.getElementById('askBtn').onclick=async()=>{
+ let q=document.getElementById('coachQuestion').value.trim(),ans=document.getElementById('coachAnswer'),btn=document.getElementById('askBtn');
+ if(!q)return;
+ btn.disabled=true;btn.textContent='Coach thinking…';ans.innerHTML=`<div class='coachreply'>Reviewing your session and recent training data…</div>`;
+ try{const reply=await BBDB.coach(q,state);ans.innerHTML=`<div class='coachreply'>${reply.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')}</div>`}
+ catch(err){ans.innerHTML=`<div class='coachreply'><b>Coach unavailable.</b><br>${String(err.message||err).replace(/</g,'&lt;')}</div>`}
+ finally{btn.disabled=false;btn.textContent='Ask Coach'}
+};
 document.getElementById('finishBtn').onclick=()=>{
  let ex=baseExercises.map((e,ei)=>{let es=exState(ei);return {name:e.name,performed:es.performed,swapped:!!es.swapped,technique:es.technique,sets:(es.sets||[]).map(s=>({...s}))}});
  let completedSets=ex.reduce((n,e)=>n+e.sets.filter(s=>s.completed).length,0);
@@ -87,6 +96,7 @@ document.getElementById('finishBtn').onclick=()=>{
  h.unshift({id:state.sessionId,name:'Shoulders + Arms',date:state.startedAt,finishedAt:new Date().toISOString(),completedSets,exercises:ex});
  DB.set('history',h);
  let sched=DB.get('schedule',{cursor:4,reschedules:[]});sched.cursor=Math.min(6,(sched.cursor||4)+1);DB.set('schedule',sched);
+ BBDB.finishWorkout(state).catch(err=>console.error('Cloud workout finish:',err));
  localStorage.removeItem('todayWorkout');
  alert(`Workout saved: ${completedSets} completed working sets.`);
  location.href='history.html';
