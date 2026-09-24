@@ -1,29 +1,18 @@
-# Ben Bodybuilding Coach V1.5.1
+# Ben Bodybuilding Coach V1.6
 
-This build is intentionally FLAT: all files go in the GitHub repository root.
+V1.6 begins the cloud-data/progression phase.
 
-This fixes the deployment problem where new HTML was loading while older JavaScript/CSS remained inside the existing `js` and `css` folders.
+## Added
+- Supabase account connection via email magic link.
+- Secure per-user database schema is live.
+- Exercise library seeded for the current Shoulders + Arms session.
+- Database helper for historical set retrieval.
+- Progression engine can calculate LAST / BEST / TODAY once cloud history exists.
+- Existing V1.5.1 local workout UI remains intact while migration to cloud storage is completed.
 
-## Expected root files
-- index.html
-- workout.html
-- history.html
-- app.css
-- storage.js
-- app.js
-- workout.js
-- manifest.webmanifest
-- sw.js
-- README.md
+## Upload
+Upload all files in this folder to the GitHub repository root and replace existing files.
+The build marker should show `v1.6`.
 
-You may delete the old `css` and `js` folders after this version is working.
-
-## Functional checks
-- Home shows the full Monday–Sunday training cycle.
-- Rest / Reschedule opens a choice modal.
-- Workout sets begin as empty circles, not completed ticks.
-- Tapping the circle completes a set; tapping the tick reverses it.
-- Swap opens alternatives and selecting one changes the performed exercise.
-- Add Set adds an override set.
-- Completed workouts save to Progress.
-- A small `v1.5.1` marker appears near the lower-right of each page.
+## Important
+V1.6 is a transition build. Existing localStorage history has not been silently copied to the cloud because historical data should be verified before import.
