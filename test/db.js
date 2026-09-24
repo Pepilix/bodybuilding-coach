@@ -110,7 +110,7 @@ window.BBDB = {
 ,
   async role(){ const {data,error}=await window.bbSupabase.rpc('my_role'); if(error) throw error; return data; },
   async programme(){ const {data,error}=await window.bbSupabase.rpc('client_programme'); if(error) throw error; return data; },
-  async generateProgramme(){ const {data:{session}}=await window.bbSupabase.auth.getSession(); if(!session)throw new Error('Sign in first.'); const r=await fetch(SUPABASE_URL+'/functions/v1/coach',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+session.access_token},body:JSON.stringify({mode:'programme'})}); const j=await r.json(); if(!r.ok)throw new Error(j.error||'Programme generation failed'); return j; },
+  async generateProgramme(){ const {data:{session}}=await window.bbSupabase.auth.getSession(); if(!session)throw new Error('Sign in first.'); const r=await fetch(SUPABASE_URL+'/functions/v1/coach',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_PUBLISHABLE_KEY,'Authorization':'Bearer '+session.access_token},body:JSON.stringify({mode:'programme'})}); const j=await r.json(); if(!r.ok)throw new Error(j.error||'Programme generation failed'); return j; },
   async claimInvite(code){ const {data,error}=await window.bbSupabase.rpc('claim_coach_invite',{p_code:code}); if(error) throw error; return data; },
   async saveOnboarding(form, membershipId=null){
     const user=await this.user(); if(!user) throw new Error('Sign in first.');
