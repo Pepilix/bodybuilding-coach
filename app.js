@@ -45,3 +45,13 @@ if(hist){
     if(value && /^\d{4}-\d{2}-\d{2}$/.test(value)){arr[i].date=value+'T12:00:00';DB.set('history',arr);location.reload()}
   });
 }
+
+function reminderSummary(){
+ const box=document.getElementById('nextCheckin');if(!box)return;
+ const defs=[{id:'macros',name:'Daily macros',priority:'Required',frequency:'daily',day:null,time:'20:30',enabled:true},{id:'weighin',name:'Friday weigh-in',priority:'Required',frequency:'weekly',day:5,time:'06:00',enabled:true},{id:'progress',name:'Waist + progress photos',priority:'Recommended',frequency:'fortnightly',day:5,time:'06:00',enabled:true},{id:'measurements',name:'Full measurements',priority:'Recommended',frequency:'monthly',day:5,time:'06:00',enabled:true},{id:'inbody',name:'InBody',priority:'Optional',frequency:'monthly',day:5,time:'07:00',enabled:true}];
+ let rs=DB.get('reminders',null);if(!rs){rs=defs;DB.set('reminders',rs)}let h=DB.get('checkinHistory',[]);
+ const last=id=>h.filter(x=>x.id===id).sort((a,b)=>new Date(b.date)-new Date(a.date))[0]?.date;
+ const due=r=>{let n=new Date(),l=last(r.id),d=l?new Date(l):null,x;if(r.frequency==='daily'){x=new Date(n);let [a,b]=r.time.split(':');x.setHours(+a,+b,0,0);if(d&&d>=x)x.setDate(x.getDate()+1);return x}if(r.frequency==='weekly'||r.frequency==='fortnightly'){if(d){x=new Date(d);x.setDate(x.getDate()+(r.frequency==='weekly'?7:14))}else{x=new Date(n);x.setDate(x.getDate()+((+r.day-x.getDay()+7)%7))}let [a,b]=r.time.split(':');x.setHours(+a,+b,0,0);return x}x=d?new Date(d):new Date(n);if(d)x.setMonth(x.getMonth()+1);else{x.setDate(1);if(x<n)x.setMonth(x.getMonth()+1)}let [a,b]=r.time.split(':');x.setHours(+a,+b,0,0);return x};
+ let active=rs.filter(r=>r.enabled).map(r=>({...r,due:due(r)})).sort((a,b)=>a.due-b.due),over=active.filter(r=>r.due<=new Date()),n=over[0]||active[0];if(!n){box.innerHTML='<p class="muted">No reminders enabled.</p>';return}box.innerHTML='<div class="dashcheck '+(over.length?'overdue':'')+'"><div><span class="priority '+n.priority.toLowerCase()+'">'+n.priority+'</span><b>'+(over.length?over.length+' overdue':n.name)+'</b><small>'+(over.length?n.name:'Due '+n.due.toLocaleString('en-GB'))+'</small></div><a href="reminders.html">'+(over.length?'REVIEW':'OPEN')+' →</a></div>';
+}
+reminderSummary();
