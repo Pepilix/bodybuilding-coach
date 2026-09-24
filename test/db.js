@@ -1,6 +1,7 @@
 
 const SUPABASE_URL = 'https://wdlnsnfxylpbedlsmiuu.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_EikNG5u7neTg3rPybU0Sug_UrUv5x8Y';
+const SUPABASE_KEY = SUPABASE_PUBLISHABLE_KEY;
 window.bbSupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
 window.BBDB = {
