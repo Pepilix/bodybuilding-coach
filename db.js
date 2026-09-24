@@ -85,7 +85,7 @@ window.BBDB = {
       load_unit:'kg',load_kg:setData.kg===''||setData.kg==null?null:Number(setData.kg),
       reps:setData.reps===''||setData.reps==null?null:Number(setData.reps),
       rir:setData.rir===''||setData.rir==null?null:Number(setData.rir),
-      technique:exerciseState.technique==='None'?null:exerciseState.technique,
+      technique:setData.technique|| (exerciseState.technique==='None'?null:exerciseState.technique),
       is_completed:!!setData.completed,
       completed_at:setData.completed?(setData.completedAt||new Date().toISOString()):null
     };
