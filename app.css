@@ -49,3 +49,6 @@ nav a{width:25%}.reminderrow{padding:14px 0;border-top:1px solid var(--line)}.re
 
 /* V192 exercise history */
 .exerciseHistoryLink{background:none;border:0;padding:0;color:var(--text);font:inherit;font-weight:800;text-decoration:underline;text-decoration-color:#59626c;text-underline-offset:3px}.exerciseHistoryModal{max-height:78vh;overflow:auto}.modalClose{width:auto!important;padding:8px 11px!important;margin:0!important}.exerciseHistoryEntry{padding:12px 0;border-top:1px solid var(--line)}.exerciseHistoryEntry:first-child{border-top:0}.exerciseHistoryEntry>div{display:flex;justify-content:space-between;gap:10px}.exerciseHistoryEntry p{font-size:12px;color:#cbd0d5;line-height:1.5;margin:6px 0}.exerciseHistoryEntry strong{font-size:12px}.exerciseHistoryEntry .positive{color:var(--accent)}.exerciseHistoryEntry .negative{color:#ffad66}
+
+/* V193 auth */
+.authShell{max-width:440px;padding-top:max(70px,12vh)}.authShell .card{margin-top:20px}.authShell .primary{width:100%}
