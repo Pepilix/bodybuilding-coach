@@ -110,13 +110,14 @@ window.BBDB = {
 ,
   async role(){ const {data,error}=await window.bbSupabase.rpc('my_role'); if(error) throw error; return data; },
   async programme(){ const {data,error}=await window.bbSupabase.rpc('client_programme'); if(error) throw error; return data; },
+  async generateProgramme(){ const {data:{session}}=await window.bbSupabase.auth.getSession(); if(!session)throw new Error('Sign in first.'); const r=await fetch(SUPABASE_URL+'/functions/v1/coach',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+session.access_token},body:JSON.stringify({mode:'programme'})}); const j=await r.json(); if(!r.ok)throw new Error(j.error||'Programme generation failed'); return j; },
   async claimInvite(code){ const {data,error}=await window.bbSupabase.rpc('claim_coach_invite',{p_code:code}); if(error) throw error; return data; },
   async saveOnboarding(form, membershipId=null){
     const user=await this.user(); if(!user) throw new Error('Sign in first.');
     const profile={id:user.id,display_name:form.display_name||user.email};
     let {error}=await window.bbSupabase.from('profiles').upsert(profile); if(error) throw error;
     const row={user_id:user.id,coach_client_id:membershipId||null,date_of_birth:form.date_of_birth||null,height_cm:form.height_cm?Number(form.height_cm):null,
-      sex:form.sex||null,experience_level:form.experience_level||null,primary_goal:form.primary_goal||null,target_event:form.target_event||null,
+      sex:form.sex||null,experience_level:form.experience_level||null,primary_goal:form.primary_goal||null,priority_muscles:form.priority_muscles||null,target_event:form.target_event||null,
       target_event_date:form.target_event_date||null,training_days_per_week:form.training_days_per_week?Number(form.training_days_per_week):null,
       session_minutes:form.session_minutes?Number(form.session_minutes):null,equipment_access:form.equipment_access||null,occupation_activity:form.occupation_activity||null,
       injuries_limitations:form.injuries_limitations||null,exercise_preferences:form.exercise_preferences||null,notes:form.notes||null,completed_at:new Date().toISOString(),updated_at:new Date().toISOString()};
