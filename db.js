@@ -48,8 +48,8 @@ window.BBDB = {
     if(existing) return existing.id;
     const {data,error}=await window.bbSupabase.from('workouts').insert({
       user_id:user.id, client_session_id:state.sessionId, name,
-      actual_date:new Date(state.startedAt).toISOString().slice(0,10),
-      started_at:state.startedAt, status:'in_progress'
+      actual_date:new Date(state.startedAt).toLocaleDateString('en-CA'),
+      started_at:state.startedAt, status:'in_progress', block_id:state.blockId||null, program_session_id:state.programSessionId||null
     }).select('id').single();
     if(error) throw error; return data.id;
   },
@@ -73,7 +73,7 @@ window.BBDB = {
   },
   async syncSet(state, exerciseIndex, setIndex, exercise, exerciseState, setData) {
     const user=await this.user(); if(!user) return {skipped:true};
-    const workoutId=await this.ensureWorkout(state);
+    const workoutId=await this.ensureWorkout(state,state.workoutName||'Workout');
     const wxId=await this.ensureWorkoutExercise(workoutId,exerciseIndex+1,exercise.name,exerciseState.performed,exerciseState.technique);
     const payload={
       workout_exercise_id:wxId,workout_id:workoutId,user_id:user.id,set_no:setIndex+1,
@@ -92,7 +92,7 @@ window.BBDB = {
   },
   async finishWorkout(state) {
     const user=await this.user(); if(!user) return {skipped:true};
-    const id=await this.ensureWorkout(state);
+    const id=await this.ensureWorkout(state,state.workoutName||'Workout');
     const {error}=await window.bbSupabase.from('workouts').update({status:'completed',completed_at:new Date().toISOString()}).eq('id',id).eq('user_id',user.id);
     if(error) throw error; return {id};
   },
@@ -130,5 +130,5 @@ window.BBDB = {
   async createBlock(clientId,p){ const {data,error}=await window.bbSupabase.rpc('coach_create_block',{p_client:clientId,p_name:p.name,p_goal:p.goal,p_priority:p.priority||[],p_secondary:p.secondary||[],p_maintain:p.maintain||[],p_start:p.start||new Date().toISOString().slice(0,10),p_end:p.end||null}); if(error)throw error; return data; },
   async addSession(clientId,blockId,p){ const {data,error}=await window.bbSupabase.rpc('coach_add_session',{p_client:clientId,p_block:blockId,p_sequence:p.sequence,p_name:p.name,p_emphasis:p.emphasis||null,p_day:p.day||null}); if(error)throw error; return data; },
   async addSessionExercise(clientId,sessionId,p){ const {data,error}=await window.bbSupabase.rpc('coach_add_session_exercise',{p_client:clientId,p_session:sessionId,p_exercise:p.exercise_id,p_order:p.order,p_sets:p.sets,p_rep_min:p.rep_min,p_rep_max:p.rep_max,p_rir_start:p.rir_start,p_rir_end:p.rir_end,p_rest:p.rest,p_notes:p.notes||null,p_unit:p.unit||'kg'}); if(error)throw error; return data; },
-  async cloudHistory(){ const user=await this.user(); if(!user)return []; const {data,error}=await window.bbSupabase.from('workouts').select('id,name,actual_date,started_at,completed_at,status,workout_exercises(performed_name,sets(load_value,load_unit,reps,rir,is_completed,set_no))').eq('user_id',user.id).order('actual_date',{ascending:false}).limit(30); if(error)throw error; return data||[]; }
+  async cloudHistory(){ const user=await this.user(); if(!user)return []; const {data,error}=await window.bbSupabase.from('workouts').select('id,name,actual_date,started_at,completed_at,status,program_session_id,workout_exercises(performed_name,sets(load_value,load_unit,reps,rir,is_completed,set_no))').eq('user_id',user.id).order('actual_date',{ascending:false}).limit(30); if(error)throw error; return data||[]; }
 };
