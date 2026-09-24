@@ -1,18 +1,16 @@
-# Ben Bodybuilding Coach V1.6
+# Ben Bodybuilding Coach V1.6.1
 
-V1.6 begins the cloud-data/progression phase.
+Hotfix for V1.6 Cloud Data initialization.
 
-## Added
-- Supabase account connection via email magic link.
-- Secure per-user database schema is live.
-- Exercise library seeded for the current Shoulders + Arms session.
-- Database helper for historical set retrieval.
-- Progression engine can calculate LAST / BEST / TODAY once cloud history exists.
-- Existing V1.5.1 local workout UI remains intact while migration to cloud storage is completed.
+The V1.6 HTML used single-quoted script tags, while the build step looked for double-quoted tags.
+That meant `db.js` and the Supabase browser SDK were not actually loaded on the deployed pages,
+so the Cloud Data card remained on “Checking account…”.
 
-## Upload
-Upload all files in this folder to the GitHub repository root and replace existing files.
-The build marker should show `v1.6`.
+V1.6.1 explicitly loads:
+- Supabase JS browser SDK
+- db.js
+- existing storage.js/app.js/workout.js
 
-## Important
-V1.6 is a transition build. Existing localStorage history has not been silently copied to the cloud because historical data should be verified before import.
+Upload all files to the repository root and replace the existing files.
+After GitHub Pages deploys, confirm the bottom marker reads `v1.6.1`.
+The Cloud Data card should then change from “Checking account…” to the email sign-in controls.
