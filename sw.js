@@ -1,0 +1,1 @@
+const CACHE='ben-coach-v14';const ASSETS=['./','index.html','workout.html','history.html','css/app.css','js/storage.js','js/app.js','js/workout.js','manifest.webmanifest'];self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));
