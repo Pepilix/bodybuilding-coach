@@ -1,16 +1,16 @@
-# Ben Bodybuilding Coach V1.6.1
+# Ben Bodybuilding Coach V1.6.2
 
-Hotfix for V1.6 Cloud Data initialization.
+Backend separation build.
 
-The V1.6 HTML used single-quoted script tags, while the build step looked for double-quoted tags.
-That meant `db.js` and the Supabase browser SDK were not actually loaded on the deployed pages,
-so the Cloud Data card remained on “Checking account…”.
+Changes:
+- Repointed the app from the Pepilix Supabase project to the dedicated Bodybuilding Coach project.
+- Database access now uses the dedicated project's public schema.
+- New Bodybuilding Coach database contains the training model, RLS policies, indexes and seeded exercise library.
+- Pepilix is no longer used by this build.
+- Build/cache marker bumped to V1.6.2.
 
-V1.6.1 explicitly loads:
-- Supabase JS browser SDK
-- db.js
-- existing storage.js/app.js/workout.js
+Upload every file in this ZIP to the GitHub repository root and replace the existing files.
 
-Upload all files to the repository root and replace the existing files.
-After GitHub Pages deploys, confirm the bottom marker reads `v1.6.1`.
-The Cloud Data card should then change from “Checking account…” to the email sign-in controls.
+Authentication still requires the dedicated Supabase project's Authentication > URL Configuration:
+Site URL: https://pepilix.github.io/bodybuilding-coach/
+Redirect URL: https://pepilix.github.io/bodybuilding-coach/**
