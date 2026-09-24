@@ -1,6 +1,6 @@
 <!doctype html><html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1,viewport-fit=cover'><meta name='theme-color' content='#0b0d10'><link rel='stylesheet' href='app.css'><title>Workout</title></head><body><main class='shell workout'><header><div class='eyebrow'>NEXT SESSION</div><h1>Shoulders + Arms</h1><p class='muted'>Delt emphasis · ~60–70 min · working sets only</p></header><div id='exerciseList'></div><section class='card ask'><span>ASK COACH</span><h2>Need an adjustment?</h2><textarea id='coachQuestion' placeholder='e.g. Can we have a bicep finisher?'></textarea><button id='askBtn'>Ask Coach</button><div id='coachAnswer'></div></section><button id='finishBtn' class='finish'>Finish Workout</button></main>
 <div id='swapModal' class='modalback hidden'><div class='modal'><h2 id='swapTitle'>Swap exercise</h2><p class='muted'>Choose the movement you will actually perform. The original prescription remains in history.</p><div id='swapChoices'></div><button id='cancelSwap' class='cancel'>Cancel</button></div></div>
-<div id='restBar' class='restbar hidden'><span>REST</span><b id='restTime'>01:30</b><button id='skipRest'>Skip</button><button id='addRest'>+30s</button></div><nav><a href='index.html'>Home</a><a class='active' href='workout.html'>Workout</a><a href='history.html'>Progress</a></nav><script src='storage.js'></script><script src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'></script><script src='db.js'></script><script src='workout.js'></script><script>if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').catch(()=>{})}</script><script>
+<div id='restBar' class='restbar hidden'><span>REST</span><b id='restTime'>01:30</b><button id='skipRest'>Skip</button><button id='addRest'>+30s</button></div><nav><a href='index.html'>Home</a><a class='active' href='workout.html'>Workout</a><a href='history.html'>Progress</a></nav><script src='storage.js'></script><script src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'></script><script src='db.js'></script><script src='workout-v2.js'></script><script>if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').catch(()=>{})}</script><script>
 (async()=>{
  if(!(await BBDB.user())) return;
  for(const card of document.querySelectorAll('.exercise-card,.exercise')){
@@ -16,4 +16,4 @@
    if(boxes[1]&&tar) boxes[1].innerHTML='<small>TODAY</small><strong>'+tar.load+' kg × '+tar.reps+' target @'+tar.rir+'</strong>';
  }
 })();
-</script><div style='position:fixed;right:8px;bottom:64px;font-size:9px;color:#66717d;z-index:2'>v1.8</div></body></html>
+</script><div style='position:fixed;right:8px;bottom:64px;font-size:9px;color:#66717d;z-index:2'>v2.0</div></body></html>
