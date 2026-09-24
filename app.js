@@ -5,25 +5,25 @@ function editMetric(k,label){let v=prompt(label,profile[k]);if(v!==null&&!isNaN(
 
 ['macroUpload','inbodyUpload','photoUpload'].forEach(id=>{let el=document.getElementById(id);if(el)el.onchange=()=>{if(el.files[0]){let log=DB.get('uploads',[]);log.unshift({type:id,name:el.files[0].name,date:new Date().toISOString()});DB.set('uploads',log);document.getElementById('uploads').textContent='Recorded: '+el.files[0].name+' · '+new Date().toLocaleString()+'. Image analysis/storage comes with the backend.';}}});
 
-const cycle=['Pull A','Legs + Abs','Rest / Steps','Push A','Shoulders + Arms','Pull B + Upper Chest','Rest'];
-function renderCycle(){
+let cycleProgramme=null;
+async function renderCycle(){
   let box=document.getElementById('week'); if(!box)return;
-  let sched=DB.get('schedule',{cursor:4,reschedules:[]});
-  let days=['MON','TUE','WED','THU','FRI','SAT','SUN'];
-  box.innerHTML=cycle.map((name,i)=>{
-    let cls=i<sched.cursor?'completed':i===sched.cursor?'today':'';
-    let moved=(sched.reschedules||[]).some(r=>r.sessionIndex===i);
-    if(moved) cls+=' rescheduled';
-    return `<div class='${cls}'><span>${days[i]}</span><b>${name}</b>${i===sched.cursor?'<span class="statuspill">NEXT</span>':''}</div>`
-  }).join('');
+  const fallback=['Pull A','Legs + Abs','Rest / Steps','Push A','Shoulders + Arms','Pull B + Upper Chest','Rest'];
+  let sessions=[];
+  try{cycleProgramme=await BBDB.programme();sessions=(cycleProgramme?.sessions||[]).map(s=>({id:s.id,name:s.name,emphasis:s.emphasis,exercises:s.exercises||[]}));}catch(e){}
+  const byName=new Map(sessions.map(s=>[s.name,s]));
+  let cycle=fallback.map(name=>name.startsWith('Rest')?{name,rest:true}:{...(byName.get(name)||{name,exercises:[]}),rest:false});
+  let sched=DB.get('schedule',{cursor:4,reschedules:[]}),days=['MON','TUE','WED','THU','FRI','SAT','SUN'];
+  box.innerHTML=cycle.map((s,i)=>{let cls=i<sched.cursor?'completed':i===sched.cursor?'today':'';return `<div class='${cls} cycleRow' data-cycle='${i}'><span>${days[i]}</span><b>${s.name}</b>${i===sched.cursor?'<span class="statuspill">NEXT</span>':''}</div><div class="cycleExpand hidden" id="cycle-${i}"></div>`}).join('');
+  document.querySelectorAll('[data-cycle]').forEach(row=>row.onclick=()=>{const i=+row.dataset.cycle,s=cycle[i],d=document.getElementById('cycle-'+i),open=!d.classList.contains('hidden');document.querySelectorAll('.cycleExpand').forEach(x=>x.classList.add('hidden'));if(open)return;if(s.rest){d.innerHTML='<p><b>Recovery day</b></p><p class="muted">No lifting prescribed. Steps and normal recovery activity only.</p>'}else if(s.exercises?.length){d.innerHTML='<p class="muted">'+(s.emphasis||'Working sets')+'</p>'+s.exercises.map(x=>'<div class="cycleExercise"><b>'+x.exercise.name+'</b><span>'+x.prescribed_sets+' × '+x.rep_min+'–'+x.rep_max+(x.load_unit?' · '+x.load_unit:'')+'</span></div>').join('')+'<a class="cycleStart" href="workout.html?v=185&session='+encodeURIComponent(s.id)+'">Open workout →</a>'}else d.innerHTML='<p class="muted">Session details are not available in the active block.</p>';d.classList.remove('hidden')});
 }
 renderCycle();
-
 let restBtn=document.getElementById('restBtn'), modal=document.getElementById('rescheduleModal');
 if(restBtn) restBtn.onclick=()=>modal.classList.remove('hidden');
 let cancel=document.getElementById('cancelReschedule'); if(cancel) cancel.onclick=()=>modal.classList.add('hidden');
 document.querySelectorAll('[data-reason]').forEach(b=>b.onclick=()=>{
   let sched=DB.get('schedule',{cursor:4,reschedules:[]});
+  const cycle=['Pull A','Legs + Abs','Rest / Steps','Push A','Shoulders + Arms','Pull B + Upper Chest','Rest'];
   sched.reschedules=sched.reschedules||[];
   sched.reschedules.push({sessionIndex:sched.cursor,session:cycle[sched.cursor],reason:b.dataset.reason,date:new Date().toISOString()});
   DB.set('schedule',sched); modal.classList.add('hidden'); renderCycle();
@@ -55,4 +55,3 @@ function reminderSummary(){
  let active=rs.filter(r=>r.enabled).map(r=>({...r,due:due(r)})).sort((a,b)=>a.due-b.due),over=active.filter(r=>r.due<=new Date()),n=over[0]||active[0];if(!n){box.innerHTML='<p class="muted">No reminders enabled.</p>';return}box.innerHTML='<div class="dashcheck '+(over.length?'overdue':'')+'"><div><span class="priority '+n.priority.toLowerCase()+'">'+n.priority+'</span><b>'+(over.length?over.length+' overdue':n.name)+'</b><small>'+(over.length?n.name:'Due '+n.due.toLocaleString('en-GB'))+'</small></div><a href="reminders.html">'+(over.length?'REVIEW':'OPEN')+' →</a></div>';
 }
 reminderSummary();
-(async function nutritionTargets(){const tk=document.getElementById('trainKcal');if(!tk)return;let local=DB.get('nutritionTargets',{training:profile.calories||2500,rest:2200,protein:180});try{const cloud=await BBDB.latestNutritionTarget();if(cloud)local={...local,...cloud}}catch(e){}tk.value=local.training||2500;restKcal.value=local.rest||2200;proteinTarget.value=local.protein||180;profile.calories=Number(tk.value);DB.set('profile',profile);document.getElementById('calories').textContent=profile.calories;document.getElementById('calorieMetric').onclick=()=>document.getElementById('nutritionCard').scrollIntoView({behavior:'smooth'});document.getElementById('saveNutrition').onclick=async()=>{const p={training:Number(tk.value),rest:Number(restKcal.value),protein:Number(proteinTarget.value)};DB.set('nutritionTargets',p);profile.calories=p.training;DB.set('profile',profile);document.getElementById('calories').textContent=p.training;nutritionMsg.textContent='Targets updated on this device.';try{await BBDB.saveNutritionTargets(p);nutritionMsg.textContent='Nutrition targets updated and saved to coaching data.'}catch(e){nutritionMsg.textContent+=' Sign in to sync them to coaching data.'}}})();
