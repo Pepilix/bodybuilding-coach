@@ -126,6 +126,7 @@ window.BBDB = {
   async createInvite(name,email){ const {data,error}=await window.bbSupabase.rpc('create_client_invite',{p_name:name||null,p_email:email||null}); if(error)throw error; return data?.[0]||null; },
   async coachClients(){ const {data,error}=await window.bbSupabase.rpc('coach_client_overview'); if(error)throw error; return data||[]; },
   async coachClientDetail(userId){ const {data,error}=await window.bbSupabase.rpc('coach_client_detail',{p_user:userId}); if(error)throw error; return data; },
+  async coachProgramme(userId){ const {data,error}=await window.bbSupabase.rpc('coach_programme',{p_user:userId}); if(error)throw error; return data; },
   async exercises(){ const {data,error}=await window.bbSupabase.from('exercises').select('*').order('name'); if(error)throw error; return data||[]; },
   async createBlock(clientId,p){ const {data,error}=await window.bbSupabase.rpc('coach_create_block',{p_client:clientId,p_name:p.name,p_goal:p.goal,p_priority:p.priority||[],p_secondary:p.secondary||[],p_maintain:p.maintain||[],p_start:p.start||new Date().toISOString().slice(0,10),p_end:p.end||null}); if(error)throw error; return data; },
   async addSession(clientId,blockId,p){ const {data,error}=await window.bbSupabase.rpc('coach_add_session',{p_client:clientId,p_block:blockId,p_sequence:p.sequence,p_name:p.name,p_emphasis:p.emphasis||null,p_day:p.day||null}); if(error)throw error; return data; },
