@@ -9,6 +9,7 @@ window.BBDB = {
     return data.user || null;
   },
   async signInWithPassword(email,password){ return await window.bbSupabase.auth.signInWithPassword({email,password}); },
+  async resetPassword(email){ return await window.bbSupabase.auth.resetPasswordForEmail(email,{redirectTo:'https://pepilix.github.io/bodybuilding-coach/reset-password.html?v=194'}); },
   async setPassword(password){ return await window.bbSupabase.auth.updateUser({password}); },
   async signIn(email) {
     return await window.bbSupabase.auth.signInWithOtp({
