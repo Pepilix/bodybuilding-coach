@@ -1,13 +1,15 @@
 
 const SUPABASE_URL = 'https://wdlnsnfxylpbedlsmiuu.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_EikNG5u7neTg3rPybU0Sug_UrUv5x8Y';
-window.bbSupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+window.bbSupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storage:window.localStorage}});
 
 window.BBDB = {
   async user() {
     const {data} = await window.bbSupabase.auth.getUser();
     return data.user || null;
   },
+  async signInWithPassword(email,password){ return await window.bbSupabase.auth.signInWithPassword({email,password}); },
+  async setPassword(password){ return await window.bbSupabase.auth.updateUser({password}); },
   async signIn(email) {
     return await window.bbSupabase.auth.signInWithOtp({
       email,
