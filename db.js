@@ -24,18 +24,20 @@ window.BBDB = {
     if(!wes?.length) return [];
     const ids=wes.map(x=>x.id);
     const {data} = await window.bbSupabase.from('sets')
-      .select('load_kg,reps,rir,completed_at,workout_exercise_id')
+      .select('load_kg,load_value,load_unit,reps,rir,completed_at,workout_exercise_id')
       .eq('user_id',user.id).eq('is_completed',true).in('workout_exercise_id',ids)
       .order('completed_at',{ascending:false}).limit(limit);
     return data||[];
   },
   target(history, repMin, repMax) {
     if(!history?.length) return null;
-    const last=history[0], load=Number(last.load_kg||0), reps=Number(last.reps||0), rir=Number(last.rir??2);
+    const last=history[0], load=Number(last.load_value ?? last.load_kg ?? 0), reps=Number(last.reps||0), rir=Number(last.rir??2);
+    const unit=last.load_unit || 'kg';
     let nextLoad=load, targetReps=Math.max(repMin,reps);
-    if(reps>=repMax && rir<=1) { nextLoad=Math.round((load+2.5)*2)/2; targetReps=repMin; }
+    const step=unit==='lb'?5:2.5;
+    if(reps>=repMax && rir<=1) { nextLoad=Math.round((load+step)*2)/2; targetReps=repMin; }
     else if(reps<repMax) targetReps=Math.min(repMax,reps+1);
-    return {load:nextLoad,reps:targetReps,rir:'1–2'};
+    return {load:nextLoad,reps:targetReps,rir:'1–2',unit};
   }
 ,
   async ensureWorkout(state, name='Shoulders + Arms') {
