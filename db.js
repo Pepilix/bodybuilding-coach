@@ -107,5 +107,28 @@ window.BBDB = {
     if(data?.error) throw new Error(data.error);
     return data?.answer||'No coaching response returned.';
   }
-
+,
+  async role(){ const {data,error}=await window.bbSupabase.rpc('my_role'); if(error) throw error; return data; },
+  async programme(){ const {data,error}=await window.bbSupabase.rpc('client_programme'); if(error) throw error; return data; },
+  async claimInvite(code){ const {data,error}=await window.bbSupabase.rpc('claim_coach_invite',{p_code:code}); if(error) throw error; return data; },
+  async saveOnboarding(form, membershipId=null){
+    const user=await this.user(); if(!user) throw new Error('Sign in first.');
+    const profile={id:user.id,display_name:form.display_name||user.email};
+    let {error}=await window.bbSupabase.from('profiles').upsert(profile); if(error) throw error;
+    const row={user_id:user.id,coach_client_id:membershipId||null,date_of_birth:form.date_of_birth||null,height_cm:form.height_cm?Number(form.height_cm):null,
+      sex:form.sex||null,experience_level:form.experience_level||null,primary_goal:form.primary_goal||null,target_event:form.target_event||null,
+      target_event_date:form.target_event_date||null,training_days_per_week:form.training_days_per_week?Number(form.training_days_per_week):null,
+      session_minutes:form.session_minutes?Number(form.session_minutes):null,equipment_access:form.equipment_access||null,occupation_activity:form.occupation_activity||null,
+      injuries_limitations:form.injuries_limitations||null,exercise_preferences:form.exercise_preferences||null,notes:form.notes||null,completed_at:new Date().toISOString(),updated_at:new Date().toISOString()};
+    ({error}=await window.bbSupabase.from('client_onboarding').upsert(row,{onConflict:'user_id'})); if(error) throw error; return row;
+  },
+  async onboarding(){ const user=await this.user(); if(!user)return null; const {data,error}=await window.bbSupabase.from('client_onboarding').select('*').eq('user_id',user.id).maybeSingle(); if(error)throw error; return data; },
+  async createInvite(name,email){ const {data,error}=await window.bbSupabase.rpc('create_client_invite',{p_name:name||null,p_email:email||null}); if(error)throw error; return data?.[0]||null; },
+  async coachClients(){ const {data,error}=await window.bbSupabase.rpc('coach_client_overview'); if(error)throw error; return data||[]; },
+  async coachClientDetail(userId){ const {data,error}=await window.bbSupabase.rpc('coach_client_detail',{p_user:userId}); if(error)throw error; return data; },
+  async exercises(){ const {data,error}=await window.bbSupabase.from('exercises').select('*').order('name'); if(error)throw error; return data||[]; },
+  async createBlock(clientId,p){ const {data,error}=await window.bbSupabase.rpc('coach_create_block',{p_client:clientId,p_name:p.name,p_goal:p.goal,p_priority:p.priority||[],p_secondary:p.secondary||[],p_maintain:p.maintain||[],p_start:p.start||new Date().toISOString().slice(0,10),p_end:p.end||null}); if(error)throw error; return data; },
+  async addSession(clientId,blockId,p){ const {data,error}=await window.bbSupabase.rpc('coach_add_session',{p_client:clientId,p_block:blockId,p_sequence:p.sequence,p_name:p.name,p_emphasis:p.emphasis||null,p_day:p.day||null}); if(error)throw error; return data; },
+  async addSessionExercise(clientId,sessionId,p){ const {data,error}=await window.bbSupabase.rpc('coach_add_session_exercise',{p_client:clientId,p_session:sessionId,p_exercise:p.exercise_id,p_order:p.order,p_sets:p.sets,p_rep_min:p.rep_min,p_rep_max:p.rep_max,p_rir_start:p.rir_start,p_rir_end:p.rir_end,p_rest:p.rest,p_notes:p.notes||null,p_unit:p.unit||'kg'}); if(error)throw error; return data; },
+  async cloudHistory(){ const user=await this.user(); if(!user)return []; const {data,error}=await window.bbSupabase.from('workouts').select('id,name,actual_date,started_at,completed_at,status,workout_exercises(performed_name,sets(load_value,load_unit,reps,rir,is_completed,set_no))').eq('user_id',user.id).order('actual_date',{ascending:false}).limit(30); if(error)throw error; return data||[]; }
 };
