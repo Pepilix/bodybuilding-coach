@@ -55,3 +55,6 @@ nav a{width:25%}.reminderrow{padding:14px 0;border-top:1px solid var(--line)}.re
 
 /* V195 swap */
 .swapBtn{width:auto!important;min-width:58px;padding:8px 11px!important;margin:0!important;align-self:flex-start;background:#20262c!important;color:#d6dbe0!important;border:1px solid #343c44!important;border-radius:10px!important;font-size:12px!important;font-weight:800!important}.exerciseTop{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+
+/* V196 coach actions */
+.coachApply{margin-top:10px!important;border-color:var(--accent)!important;color:var(--accent)!important}
