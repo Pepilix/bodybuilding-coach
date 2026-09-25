@@ -1,9 +1,18 @@
 
 const profile=DB.get('profile',{weight:77.5,calories:2500,bf:11.4,waist:80});
 ['weight','calories','bf','waist'].forEach(k=>{let e=document.getElementById(k);if(e)e.textContent=profile[k]});
-function editMetric(k,label){let v=prompt(label,profile[k]);if(v!==null&&!isNaN(parseFloat(v))){profile[k]=parseFloat(v);DB.set('profile',profile);DB.set('bodyLog',[{type:k,value:parseFloat(v),date:new Date().toISOString()},...DB.get('bodyLog',[])]);location.reload()}}
+(async function hydrateDashboard(){
+ try{
+  const rows=await BBDB.latestMetrics(); if(!rows.length)return;
+  const latest=(field)=>rows.find(x=>x[field]!=null)?.[field];
+  const map={weight:'weight_kg',bf:'body_fat_pct',waist:'waist_cm'};
+  Object.entries(map).forEach(([id,field])=>{const v=latest(field),el=document.getElementById(id);if(v!=null&&el)el.textContent=v});
+ }catch(e){console.warn('Cloud metrics unavailable',e)}
+})();
+async function editMetric(k,label){let v=prompt(label,profile[k]);if(v!==null&&!isNaN(parseFloat(v))){v=parseFloat(v);profile[k]=v;DB.set('profile',profile);DB.set('bodyLog',[{type:k,value:v,date:new Date().toISOString()},...DB.get('bodyLog',[])]);try{if(k==='weight')await BBDB.saveBodyMetrics({weight_kg:v,source:'manual'});else if(k==='waist')await BBDB.saveBodyMetrics({waist_cm:v,source:'manual'})}catch(e){alert('Saved on this device, but cloud save failed: '+e.message)}location.reload()}}
 
-['macroUpload','inbodyUpload','photoUpload'].forEach(id=>{let el=document.getElementById(id);if(el)el.onchange=()=>{if(el.files[0]){let log=DB.get('uploads',[]);log.unshift({type:id,name:el.files[0].name,date:new Date().toISOString()});DB.set('uploads',log);document.getElementById('uploads').textContent='Recorded: '+el.files[0].name+' · '+new Date().toLocaleString()+'. Image analysis/storage comes with the backend.';}}});
+['macroUpload','photoUpload'].forEach(id=>{let el=document.getElementById(id);if(el)el.onchange=()=>{if(el.files[0]){let log=DB.get('uploads',[]);log.unshift({type:id,name:el.files[0].name,date:new Date().toISOString()});DB.set('uploads',log);document.getElementById('uploads').textContent='Recorded: '+el.files[0].name+' · '+new Date().toLocaleString();}}});
+let inbody=document.getElementById('inbodyUpload');if(inbody)inbody.onchange=async()=>{if(!inbody.files[0])return;const box=document.getElementById('uploads');box.textContent='InBody selected. Enter the values from the report to save them to your coaching history.';const weight=prompt('InBody weight (kg)');if(weight===null)return;const bf=prompt('InBody body fat (%)');if(bf===null)return;const muscle=prompt('InBody skeletal muscle mass (kg) — leave blank if unavailable','');try{await BBDB.saveBodyMetrics({weight_kg:Number(weight),body_fat_pct:Number(bf),skeletal_muscle_kg:muscle===''?null:Number(muscle),source:'inbody',notes:'Imported from '+inbody.files[0].name});box.textContent='InBody saved to cloud ✓';setTimeout(()=>location.reload(),600)}catch(e){box.textContent='InBody not saved: '+e.message}};
 
 let cycleProgramme=null;
 async function renderCycle(){
@@ -48,7 +57,7 @@ if(hist){
 
 function reminderSummary(){
  const box=document.getElementById('nextCheckin');if(!box)return;
- const defs=[{id:'macros',name:'Daily macros',priority:'Required',frequency:'daily',day:null,time:'20:30',enabled:true},{id:'weighin',name:'Friday weigh-in',priority:'Required',frequency:'weekly',day:5,time:'06:00',enabled:true},{id:'progress',name:'Waist + progress photos',priority:'Recommended',frequency:'fortnightly',day:5,time:'06:00',enabled:true},{id:'measurements',name:'Full measurements',priority:'Recommended',frequency:'monthly',day:5,time:'06:00',enabled:true},{id:'inbody',name:'InBody',priority:'Optional',frequency:'monthly',day:5,time:'07:00',enabled:true}];
+ const defs=[{id:'macros',name:'Daily macros',priority:'Required',frequency:'daily',day:null,time:'20:30',enabled:true},{id:'weighin',name:'Friday weigh-in',priority:'Required',frequency:'weekly',day:5,time:'08:00',enabled:true},{id:'progress',name:'Waist + progress photos',priority:'Recommended',frequency:'fortnightly',day:5,time:'08:00',enabled:true},{id:'measurements',name:'Full measurements',priority:'Recommended',frequency:'monthly',day:5,time:'08:00',enabled:true},{id:'inbody',name:'InBody',priority:'Optional',frequency:'monthly',day:5,time:'08:00',enabled:true}];
  let rs=DB.get('reminders',null);if(!rs){rs=defs;DB.set('reminders',rs)}let h=DB.get('checkinHistory',[]);
  const last=id=>h.filter(x=>x.id===id).sort((a,b)=>new Date(b.date)-new Date(a.date))[0]?.date;
  const due=r=>{let n=new Date(),l=last(r.id),d=l?new Date(l):null,x;if(r.frequency==='daily'){x=new Date(n);let [a,b]=r.time.split(':');x.setHours(+a,+b,0,0);if(d&&d>=x)x.setDate(x.getDate()+1);return x}if(r.frequency==='weekly'||r.frequency==='fortnightly'){if(d){x=new Date(d);x.setDate(x.getDate()+(r.frequency==='weekly'?7:14))}else{x=new Date(n);x.setDate(x.getDate()+((+r.day-x.getDay()+7)%7))}let [a,b]=r.time.split(':');x.setHours(+a,+b,0,0);return x}x=d?new Date(d):new Date(n);if(d)x.setMonth(x.getMonth()+1);else{x.setDate(1);if(x<n)x.setMonth(x.getMonth()+1)}let [a,b]=r.time.split(':');x.setHours(+a,+b,0,0);return x};
