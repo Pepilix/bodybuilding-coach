@@ -68,3 +68,5 @@ function reminderSummary(){
  let active=rs.filter(r=>r.enabled).map(r=>({...r,due:due(r)})).sort((a,b)=>a.due-b.due),over=active.filter(r=>r.due<=new Date()),n=over[0]||active[0];if(!n){box.innerHTML='<p class="muted">No reminders enabled.</p>';return}box.innerHTML='<div class="dashcheck '+(over.length?'overdue':'')+'"><div><span class="priority '+n.priority.toLowerCase()+'">'+n.priority+'</span><b>'+(over.length?over.length+' overdue':n.name)+'</b><small>'+(over.length?n.name:'Due '+n.due.toLocaleString('en-GB'))+'</small></div><a href="reminders.html">'+(over.length?'REVIEW':'OPEN')+' →</a></div>';
 }
 reminderSummary();
+
+(async()=>{const box=document.getElementById('coachTodayText');if(!box)return;try{const r=await BBDB.latestCoachReview();box.innerHTML=r?'<p>'+String(r.summary).replace(/</g,'&lt;')+'</p><p><b>Next:</b> '+String(r.decision||'No change').replace(/</g,'&lt;')+'</p>':'<p class="muted">Complete a workout or body check-in to generate your first automatic coaching review.</p>'}catch(e){box.innerHTML='<p class="muted">Coach review unavailable.</p>'}})();
