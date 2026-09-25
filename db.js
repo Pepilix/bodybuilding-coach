@@ -99,6 +99,8 @@ window.BBDB = {
     const {error}=await window.bbSupabase.from('workouts').update({status:'completed',completed_at:new Date().toISOString()}).eq('id',id).eq('user_id',user.id);
     if(error) throw error; return {id};
   },
+  async coachReview(reviewType,event={},sourceId=null){ const user=await this.user();if(!user)throw new Error('Sign in first.');const {data,error}=await window.bbSupabase.functions.invoke('coach',{body:{mode:'review',reviewType,event,sourceId}});if(error)throw error;if(data?.error)throw new Error(data.error);return data.review; },
+  async latestCoachReview(){ const user=await this.user();if(!user)return null;const {data,error}=await window.bbSupabase.from('coaching_reviews').select('*').eq('user_id',user.id).order('created_at',{ascending:false}).limit(1).maybeSingle();if(error)throw error;return data; },
   async coach(question, workoutState) {
     const user=await this.user(); if(!user) throw new Error('Sign in to Cloud Data before using AI Coach.');
     const {data,error}=await window.bbSupabase.functions.invoke('coach',{body:{question,workoutState}});
