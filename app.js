@@ -23,6 +23,10 @@ async function renderCycle(){
   const byName=new Map(sessions.map(s=>[s.name,s]));
   let cycle=fallback.map(name=>name.startsWith('Rest')?{name,rest:true}:{...(byName.get(name)||{name,exercises:[]}),rest:false});
   let sched=DB.get('schedule',{cursor:4,reschedules:[]}),days=['MON','TUE','WED','THU','FRI','SAT','SUN'];
+  try{
+    const cloud=await BBDB.cloudHistory(),latest=cloud.find(w=>w.status==='completed');
+    if(latest){const doneIndex=fallback.indexOf(latest.name);if(doneIndex>=0&&doneIndex>=sched.cursor){sched.cursor=Math.min(doneIndex+1,fallback.length-1);DB.set('schedule',sched)}}
+  }catch(e){console.warn('Could not reconcile training cycle',e)}
   box.innerHTML=cycle.map((s,i)=>{let cls=i<sched.cursor?'completed':i===sched.cursor?'today':'';return `<div class='${cls} cycleRow' data-cycle='${i}'><span>${days[i]}</span><b>${s.name}</b>${i===sched.cursor?'<span class="statuspill">NEXT</span>':''}</div><div class="cycleExpand hidden" id="cycle-${i}"></div>`}).join('');
   document.querySelectorAll('[data-cycle]').forEach(row=>row.onclick=()=>{const i=+row.dataset.cycle,s=cycle[i],d=document.getElementById('cycle-'+i),open=!d.classList.contains('hidden');document.querySelectorAll('.cycleExpand').forEach(x=>x.classList.add('hidden'));if(open)return;if(s.rest){d.innerHTML='<div class="cyclePreview"><b>Recovery day</b><span>No lifting prescribed · steps and recovery</span></div>'}else if(s.exercises?.length){d.innerHTML='<div class="cyclePreview"><div><b>'+(s.emphasis||s.name)+'</b><span>'+s.exercises.length+' exercises · '+s.exercises.reduce((n,x)=>n+(Number(x.prescribed_sets)||0),0)+' working sets</span></div><a href="workout.html?v=189&session='+encodeURIComponent(s.id)+'">View workout →</a></div>'}else d.innerHTML='<div class="cyclePreview"><span>Session details unavailable.</span></div>';d.classList.remove('hidden')});
 }
