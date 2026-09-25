@@ -2,7 +2,7 @@
  const box=document.getElementById('history'),perf=document.getElementById('performance');
  try{
   const a=await BBDB.cloudHistory();
-  box.innerHTML=a.length?a.map(w=>'<div class="historySession"><b>'+w.name+'</b><p class="muted">'+w.actual_date+' · '+w.status+'</p><div class="historySets">'+(w.workout_exercises||[]).map(e=>'<div><button class="exerciseHistoryLink" data-exercise="'+encodeURIComponent(e.performed_name)+'">'+e.performed_name+'</button>: '+(e.sets||[]).filter(s=>s.is_completed).sort((a,b)=>a.set_no-b.set_no).map(s=>(s.load_value==null?'BW':s.load_value+' '+(s.load_unit||'kg'))+' × '+s.reps+(s.rir==null?'':' @'+s.rir)).join(' · ')+'</div>').join('')+'</div></div>').join(''):'<p class="muted">No completed sessions yet.</p>';
+  box.innerHTML=a.length?a.map(w=>'<div class="historySession"><b>'+w.name+'</b><p class="muted">'+(w.completed_at?new Date(w.completed_at).toLocaleString('en-GB',{dateStyle:'medium',timeStyle:'short'}):w.actual_date)+' · '+w.status+'</p><div class="historySets">'+(w.workout_exercises||[]).map(e=>'<div><button class="exerciseHistoryLink" data-exercise="'+encodeURIComponent(e.performed_name)+'">'+e.performed_name+'</button>: '+(e.sets||[]).filter(s=>s.is_completed).sort((a,b)=>a.set_no-b.set_no).map(s=>(s.load_value==null?'BW':s.load_value+' '+(s.load_unit||'kg'))+' × '+s.reps+(s.rir==null?'':' @'+s.rir)).join(' · ')+'</div>').join('')+'</div></div>').join(''):'<p class="muted">No completed sessions yet.</p>';
   renderPerformance(a,perf); bindExerciseHistory();
  }catch(e){box.innerHTML='<p class="muted">'+e.message+'</p>';if(perf)perf.innerHTML='<p class="muted">Performance data unavailable.</p>'}
 })();
