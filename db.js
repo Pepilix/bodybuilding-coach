@@ -117,6 +117,7 @@ window.BBDB = {
   }
 ,
   async role(){ const {data,error}=await window.bbSupabase.rpc('my_role'); if(error) throw error; return data; },
+  async activeBlock(){const user=await this.user();if(!user)return null;const {data,error}=await window.bbSupabase.from('training_blocks').select('id,name,start_date,end_date,status,duration_weeks,recovery_weeks,recovery_label').eq('user_id',user.id).eq('status','active').order('created_at',{ascending:false}).limit(1).maybeSingle();if(error)throw error;return data;},
   async programme(){ const {data,error}=await window.bbSupabase.rpc('client_programme'); if(error) throw error; return data; },
   async claimInvite(code){ const {data,error}=await window.bbSupabase.rpc('claim_coach_invite',{p_code:code}); if(error) throw error; return data; },
   async saveOnboarding(form, membershipId=null){
