@@ -93,6 +93,8 @@ window.BBDB = {
     if(error) throw error;
     return {workoutId,workoutExerciseId:wxId};
   },
+  async scheduleState(){const user=await this.user();if(!user)return null;const {data,error}=await window.bbSupabase.from('training_schedule_state').select('*').eq('user_id',user.id).maybeSingle();if(error)throw error;return data;},
+  async saveScheduleState(s){const user=await this.user();if(!user)throw new Error('Sign in first.');const row={user_id:user.id,cursor:Number(s.cursor||0),reschedules:s.reschedules||[],updated_at:new Date().toISOString()};const {data,error}=await window.bbSupabase.from('training_schedule_state').upsert(row,{onConflict:'user_id'}).select().single();if(error)throw error;return data;},
   async activeWorkout(programSessionId=null){ const user=await this.user();if(!user)return null;let q=window.bbSupabase.from('workouts').select('id,name,client_session_id,actual_date,started_at,block_id,program_session_id,status,workout_exercises(id,order_no,prescribed_name,performed_name,technique,sets(set_no,load_value,load_unit,reps,rir,is_completed,completed_at))').eq('user_id',user.id).eq('status','in_progress').order('started_at',{ascending:false}).limit(1);if(programSessionId)q=q.eq('program_session_id',programSessionId);const {data,error}=await q.maybeSingle();if(error)throw error;return data; },
   async finishWorkout(state) {
     const user=await this.user(); if(!user) return {skipped:true};
