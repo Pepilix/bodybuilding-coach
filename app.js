@@ -21,7 +21,7 @@ async function renderCycle(){
  let history=[],block=null;try{[history,block]=await Promise.all([BBDB.cloudHistory(),BBDB.activeBlock()])}catch(e){console.warn(e)}
  const now=new Date(),jsDay=now.getDay(),todayIdx=(jsDay+6)%7,monday=new Date(now);monday.setHours(0,0,0,0);monday.setDate(monday.getDate()-todayIdx);
  const ymd=d=>{const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return y+'-'+m+'-'+day};
- const completedNames=new Set(history.filter(w=>w.status==='completed'&&w.actual_date>=ymd(monday)).map(w=>w.name));
+ const completedNames=new Set(history.filter(w=>w.status==='completed'&&((w.completed_at&&new Date(w.completed_at)>=monday)||w.actual_date>=ymd(monday))).map(w=>w.name));
  const matches=(planned)=>completedNames.has(planned)||(planned==='Legs + Abs'&&completedNames.has('Legs'))||(planned==='Pull B + Upper Chest'&&completedNames.has('Pull B'));
  let next=-1;for(let i=todayIdx;i<cycle.length;i++){if(!cycle[i].rest&&!matches(cycle[i].name)){next=i;break}}
  if(next<0){for(let i=0;i<cycle.length;i++){if(!cycle[i].rest&&!matches(cycle[i].name)){next=i;break}}}
