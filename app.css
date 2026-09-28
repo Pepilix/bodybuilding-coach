@@ -73,3 +73,12 @@ nav a{width:25%}.reminderrow{padding:14px 0;border-top:1px solid var(--line)}.re
 .blockStops b{display:block;font-size:.57rem;color:var(--muted);margin-bottom:2px}
 .blockCountdown{margin:14px 0 0;font-size:.82rem;line-height:1.35;color:var(--muted)}.blockCountdown b{color:var(--text)}
 @media(max-width:430px){.blockPhase{padding-left:0;padding-right:0}.blockHeadline strong{font-size:1.48rem}.phaseBadge{font-size:.66rem;padding:7px 10px}.blockStops span{font-size:.47rem}.blockStops b{font-size:.51rem}}
+
+.blockTrack.segmented{position:relative;overflow:hidden;background:var(--soft)}
+.blockTrack.segmented i{position:absolute;left:0;top:0;bottom:0}
+.weekDivider{position:absolute;top:0;bottom:0;width:1px;background:var(--card);z-index:2}
+.segmentedLabels{position:relative!important;display:block!important;height:38px;margin-top:7px;color:var(--muted)}
+.segmentedLabels .phaseLabel{position:absolute!important;width:auto!important;text-align:center!important;transform:translateX(-50%);font-size:.52rem!important;line-height:1.15;white-space:nowrap;text-transform:uppercase;letter-spacing:.04em}
+.segmentedLabels .phaseLabel b{display:block;font-size:.55rem;color:var(--muted);margin-bottom:2px}
+.segmentedLabels .buildOne{left:25%}.segmentedLabels .recoveryOne{left:45.833%}.segmentedLabels .buildTwo{left:75%}.segmentedLabels .recoveryTwo{left:95.833%}
+@media(max-width:430px){.segmentedLabels .phaseLabel{font-size:.47rem!important}.segmentedLabels .phaseLabel b{font-size:.5rem}.segmentedLabels .recoveryTwo{transform:translateX(-75%)}}
