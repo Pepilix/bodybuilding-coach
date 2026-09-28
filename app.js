@@ -22,25 +22,21 @@ async function renderCycle(){
   try{cycleProgramme=await BBDB.programme();sessions=(cycleProgramme?.sessions||[]).map(s=>({id:s.id,name:s.name,emphasis:s.emphasis,exercises:s.exercises||[]}));}catch(e){}
   const byName=new Map(sessions.map(s=>[s.name,s]));
   let cycle=fallback.map(name=>name.startsWith('Rest')?{name,rest:true}:{...(byName.get(name)||{name,exercises:[]}),rest:false});
-  let sched=DB.get('schedule',{cursor:4,reschedules:[]}),days=['MON','TUE','WED','THU','FRI','SAT','SUN'];
-  try{
-    const cloud=await BBDB.cloudHistory(),latest=cloud.find(w=>w.status==='completed');
-    if(latest){const doneIndex=fallback.indexOf(latest.name);if(doneIndex>=0&&doneIndex>=sched.cursor){sched.cursor=Math.min(doneIndex+1,fallback.length-1);DB.set('schedule',sched)}}
-  }catch(e){console.warn('Could not reconcile training cycle',e)}
-  box.innerHTML=cycle.map((s,i)=>{let cls=i<sched.cursor?'completed':i===sched.cursor?'today':'';return `<div class='${cls} cycleRow' data-cycle='${i}'><span>${days[i]}</span><b>${s.name}</b>${i===sched.cursor?'<span class="statuspill">NEXT</span>':''}</div><div class="cycleExpand hidden" id="cycle-${i}"></div>`}).join('');
-  document.querySelectorAll('[data-cycle]').forEach(row=>row.onclick=()=>{const i=+row.dataset.cycle,s=cycle[i],d=document.getElementById('cycle-'+i),open=!d.classList.contains('hidden');document.querySelectorAll('.cycleExpand').forEach(x=>x.classList.add('hidden'));if(open)return;if(s.rest){d.innerHTML='<div class="cyclePreview"><b>Recovery day</b><span>No lifting prescribed · steps and recovery</span></div>'}else if(s.exercises?.length){d.innerHTML='<div class="cyclePreview"><div><b>'+(s.emphasis||s.name)+'</b><span>'+s.exercises.length+' exercises · '+s.exercises.reduce((n,x)=>n+(Number(x.prescribed_sets)||0),0)+' working sets</span></div><a href="workout.html?v=189&session='+encodeURIComponent(s.id)+'">View workout →</a></div>'}else d.innerHTML='<div class="cyclePreview"><span>Session details unavailable.</span></div>';d.classList.remove('hidden')});
+  let sched=DB.get('schedule',{cursor:0,reschedules:[]});
+  try{const cloud=await BBDB.scheduleState();if(cloud){sched={cursor:cloud.cursor,reschedules:cloud.reschedules||[]};DB.set('schedule',sched)}else await BBDB.saveScheduleState(sched)}catch(e){console.warn('Cloud schedule unavailable',e)}
+  const lastChange=(sched.reschedules||[]).slice(-1)[0];
+  box.innerHTML=(lastChange?'<p class="smallnote">Last change: '+new Date(lastChange.date).toLocaleDateString('en-GB')+' · '+lastChange.action+(lastChange.reason?' · '+lastChange.reason:'')+'</p>':'')+cycle.map((s,i)=>{let cls=i<sched.cursor?'completed':i===sched.cursor?'today':'';let label=s.rest?'REST':(i===sched.cursor?'NEXT':'SESSION');return `<div class='${cls} cycleRow' data-cycle='${i}'><span>${label}</span><b>${s.name}</b>${i===sched.cursor?'<span class="statuspill">NEXT</span>':''}</div><div class="cycleExpand hidden" id="cycle-${i}"></div>`}).join('');
+  document.querySelectorAll('[data-cycle]').forEach(row=>row.onclick=()=>{const i=+row.dataset.cycle,s=cycle[i],d=document.getElementById('cycle-'+i),open=!d.classList.contains('hidden');document.querySelectorAll('.cycleExpand').forEach(x=>x.classList.add('hidden'));if(open)return;if(s.rest){d.innerHTML='<div class="cyclePreview"><b>Recovery day</b><span>No lifting prescribed · steps and recovery</span></div>'}else if(s.exercises?.length){d.innerHTML='<div class="cyclePreview"><div><b>'+(s.emphasis||s.name)+'</b><span>'+s.exercises.length+' exercises · '+s.exercises.reduce((n,x)=>n+(Number(x.prescribed_sets)||0),0)+' working sets</span></div><a href="workout.html?v=189&session='+encodeURIComponent(s.id)+'">Train this session today →</a></div>'}else d.innerHTML='<div class="cyclePreview"><span>Session details unavailable.</span></div>';d.classList.remove('hidden')});
 }
 renderCycle();
 let restBtn=document.getElementById('restBtn'), modal=document.getElementById('rescheduleModal');
 if(restBtn) restBtn.onclick=()=>modal.classList.remove('hidden');
 let cancel=document.getElementById('cancelReschedule'); if(cancel) cancel.onclick=()=>modal.classList.add('hidden');
-document.querySelectorAll('[data-reason]').forEach(b=>b.onclick=()=>{
-  let sched=DB.get('schedule',{cursor:4,reschedules:[]});
-  const cycle=['Pull A','Legs + Abs','Rest / Steps','Push A','Shoulders + Arms','Pull B + Upper Chest','Rest'];
-  sched.reschedules=sched.reschedules||[];
-  sched.reschedules.push({sessionIndex:sched.cursor,session:cycle[sched.cursor],reason:b.dataset.reason,date:new Date().toISOString()});
-  DB.set('schedule',sched); modal.classList.add('hidden'); renderCycle();
+document.querySelectorAll('[data-rest]').forEach(b=>b.onclick=async()=>{
+  let sched=DB.get('schedule',{cursor:0,reschedules:[]});sched.reschedules=sched.reschedules||[];sched.reschedules.push({sessionIndex:sched.cursor,action:'Rest today — session kept next',reason:b.dataset.rest,date:new Date().toISOString()});DB.set('schedule',sched);try{await BBDB.saveScheduleState(sched)}catch(e){}modal.classList.add('hidden');await renderCycle();
 });
+let skipSession=document.getElementById('skipSession');if(skipSession)skipSession.onclick=async()=>{let sched=DB.get('schedule',{cursor:0,reschedules:[]});const cycle=['Pull A','Legs + Abs','Rest / Steps','Push A','Shoulders + Arms','Pull B + Upper Chest','Rest'];let skipped=cycle[sched.cursor]||'Session';sched.reschedules=sched.reschedules||[];sched.reschedules.push({sessionIndex:sched.cursor,session:skipped,action:'Skipped — moved on',date:new Date().toISOString()});sched.cursor=Math.min(sched.cursor+1,cycle.length-1);DB.set('schedule',sched);try{await BBDB.saveScheduleState(sched)}catch(e){}modal.classList.add('hidden');await renderCycle()};
+let chooseSession=document.getElementById('chooseSession');if(chooseSession)chooseSession.onclick=()=>{modal.classList.add('hidden');document.getElementById('week')?.scrollIntoView({behavior:'smooth'});document.getElementById('cycleDetail').innerHTML='<p class="smallnote">Tap any session below, then choose <b>Train this session today</b>. Your normal sequence is preserved.</p>'};
 
 let hist=document.getElementById('history');
 if(hist){
