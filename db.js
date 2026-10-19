@@ -5,7 +5,11 @@ window.bbSupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHA
 
 window.BBDB = {
   async user() {
-    const {data} = await window.bbSupabase.auth.getUser();
+    const {data: sessionData,error: sessionError} = await window.bbSupabase.auth.getSession();
+    if(sessionError) throw sessionError;
+    if(!sessionData.session) return null;
+    const {data,error} = await window.bbSupabase.auth.getUser();
+    if(error) throw error;
     return data.user || null;
   },
   async signInWithPassword(email,password){ return await window.bbSupabase.auth.signInWithPassword({email,password}); },
